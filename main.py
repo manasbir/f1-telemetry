@@ -482,10 +482,16 @@ with open("all_data.csv", "w", newline="") as csvfile:
         "f_rr (drs) ±",
         "delta gradient",
         "delta gradient ±",
+        "c_rr",
+        "c_rr ±",
+        "c_rr (drs)",
+        "c_rr (drs) ±",
         "delta f_rr",
         "delta f_rr ±",
         "delta c_rr",
         "delta c_rr ±",
+        "regression",
+        "drs_regression",
         "drs_max_regression",
         "drs_min_regression",
         "max_regression",
@@ -549,10 +555,18 @@ with open("all_data.csv", "w", newline="") as csvfile:
                     abs((all_data[team]["drs_c_rr_max"] - all_data[team]["drs_c_rr_min"]))
                     / 2
                 ),
-                "drs_max_regression": all_data[team]["drs_max_regression"],
-                "drs_min_regression": all_data[team]["drs_min_regression"],
-                "max_regression": all_data[team]["max_regression"],
-                "min_regression": all_data[team]["min_regression"],
+                "regression": str(all_data[team]["regression"]),
+                "drs_regression": str(all_data[team]["drs_regression"]),
+                "drs_max_regression": str(all_data[team]["drs_max_regression"]),
+                "drs_min_regression": str(all_data[team]["drs_min_regression"]),
+                "max_regression": str(all_data[team]["max_regression"]),
+                "min_regression": str(all_data[team]["min_regression"]),
+                "c_rr": all_data[team]["c_rr"],
+                "c_rr ±": abs((all_data[team]["c_rr_max"] - all_data[team]["c_rr_min"])) / 2,
+                "c_rr (drs)": all_data[team]["drs_c_rr"],
+                "c_rr (drs) ±": abs((
+                    all_data[team]["drs_c_rr_max"] - all_data[team]["drs_c_rr_min"]
+                ))/2
             }
         )
 
