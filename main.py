@@ -5,9 +5,21 @@ import numpy as np
 import pandas as pd
 import os
 import logging
+from scipy.optimize import fsolve
 
 # Disable INFO level logs for all loggers
 logging.getLogger('fastf1').setLevel(logging.WARNING)
+
+
+def power_fn(x):
+    return [max_engine_power/(z) for z in x]
+
+def linear_to_quadratic(regression, x):
+    return np.poly1d([regression.c[0], 0, regression.c[1]])(x)
+
+def fn_to_solve(x, regression):
+    return [linear_to_quadratic(regression, z) - power_fn(z) for z in x]
+
 
 # enable some matplotlib patches for plotting timedelta values and load
 # FastF1's default color scheme
@@ -383,6 +395,7 @@ x = []
 y = []
 x.extend(drs_data["Red Bull"]["all"]["v^2 (m^2/s^4)"])
 y.extend(drs_data["Red Bull"]["all"]["F_dissipated (N)"])
+sqrt_x = [np.sqrt(z) for z in x]
 
 coeffs = np.polyfit(x, y, 1)
 regression = np.poly1d(coeffs)
@@ -502,7 +515,8 @@ with open("all_data.csv", "w", newline="") as csvfile:
         "v drs",
         "v drs max",
         "v drs min",
-        "delta v"
+        "delta v",
+        "delta v ±"
     ]
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
@@ -573,8 +587,20 @@ with open("all_data.csv", "w", newline="") as csvfile:
                 "c_rr (drs)": all_data[team]["drs_c_rr"],
                 "c_rr (drs) ±": abs((
                     all_data[team]["drs_c_rr_max"] - all_data[team]["drs_c_rr_min"]
-                ))/2
-
+                ))/2,
+                "v": fsolve(fn_to_solve, 100, args=all_data[team]["regression"]),
+                "v max": fsolve(fn_to_solve, 100, args=all_data[team]["max_regression"]),
+                "v min": fsolve(fn_to_solve, 100, args=all_data[team]["min_regression"]),
+                "v drs": fsolve(fn_to_solve, 100, args=all_data[team]["drs_regression"]),
+                "v drs max": fsolve(fn_to_solve, 100, args=all_data[team]["drs_max_regression"]),
+                "v drs min": fsolve(fn_to_solve, 100, args=all_data[team]["drs_min_regression"]),
+                "delta v": fsolve(fn_to_solve, 100, args=all_data[team]["drs_regression"]) - fsolve(fn_to_solve, 100, args=all_data[team]["regression"]),
+                "delta v±": (abs(
+                    fsolve(fn_to_solve, 100, args=all_data[team]["max_regression"]) - fsolve(fn_to_solve, 100, args=all_data[team]["min_regression"])
+                )/2) + 
+                (abs(
+                    fsolve(fn_to_solve, 100, args=all_data[team]["drs_max_regression"]) - fsolve(fn_to_solve, 100, args=all_data[team]["drs_min_regression"])
+                )/2)
             }
         )
 
@@ -636,20 +662,23 @@ plt.savefig("RedBull-MAX-MIN-DRS.png", bbox_inches="tight")
 plt.show()
 
 
-def quadratic_function(x, a ,c ):
-    return a * x**2 + c
 
-new_regression = all_data["Red Bull"]["regression"].coeffs()
-y_values = quadratic_function(x, new_regression[0], new_regression[1])
 
+new_regression = all_data["Red Bull"]["regression"].c
 
 plt.plot(
-    x,
-    y_values,
+    sqrt_x,
+    np.poly1d([new_regression[0], 0, new_regression[1]])(sqrt_x),
     color="white",
     label=("F_dissipated " + str(all_data["Red Bull"]["drs_regression"])).replace("x", "x^2")
 )
-plt.xlabel("v m/s")
+plt.plot(
+    sqrt_x,
+    [max_engine_power/(z) for z in sqrt_x],
+    color="white",
+    label=("F_dissipated " + str(all_data["Red Bull"]["drs_regression"])).replace("x", "x^2")
+)
+plt.xlabel("v (m/s)")
 plt.ylabel("F_dissipated (N)")
 plt.title(
     "aaa",
