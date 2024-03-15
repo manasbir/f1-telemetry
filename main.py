@@ -130,7 +130,7 @@ for race in races:
                 if row["DRS"] == 12 or row["DRS"] == 14 or row["DRS"] == 10:
                     if (
                         row["Acceleration"] > 0
-                        and row["RPM"] >= 10000
+                        and row["RPM"] >= 10500
                         and row["Throttle"] >= 97
                         and row["Brake"] == False
                         and row["nGear"] == 8
@@ -155,7 +155,7 @@ for race in races:
             for index, row in lap.iterrows():
                 if (
                     row["Acceleration"] <= 0
-                    or row["RPM"] < 10000
+                    or row["RPM"] < 10500
                     or row["Throttle"] < 97
                     or row["Brake"] == True
                     or row["nGear"] != 8
@@ -496,6 +496,13 @@ with open("all_data.csv", "w", newline="") as csvfile:
         "drs_min_regression",
         "max_regression",
         "min_regression",
+        "v",
+        "v max",
+        "v min",
+        "v drs",
+        "v drs max",
+        "v drs min",
+        "delta v"
     ]
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
@@ -567,6 +574,7 @@ with open("all_data.csv", "w", newline="") as csvfile:
                 "c_rr (drs) ±": abs((
                     all_data[team]["drs_c_rr_max"] - all_data[team]["drs_c_rr_min"]
                 ))/2
+
             }
         )
 
@@ -626,3 +634,28 @@ plt.title(
 plt.legend()
 plt.savefig("RedBull-MAX-MIN-DRS.png", bbox_inches="tight")
 plt.show()
+
+
+def quadratic_function(x, a ,c ):
+    return a * x**2 + c
+
+new_regression = all_data["Red Bull"]["regression"].coeffs()
+y_values = quadratic_function(x, new_regression[0], new_regression[1])
+
+
+plt.plot(
+    x,
+    y_values,
+    color="white",
+    label=("F_dissipated " + str(all_data["Red Bull"]["drs_regression"])).replace("x", "x^2")
+)
+plt.xlabel("v m/s")
+plt.ylabel("F_dissipated (N)")
+plt.title(
+    "aaa",
+    fontsize=10,
+)
+plt.legend()
+plt.savefig("test.png", bbox_inches="tight")
+plt.show()
+
