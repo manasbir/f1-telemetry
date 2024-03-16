@@ -18,7 +18,12 @@ def linear_to_quadratic(regression, x):
     return np.poly1d([regression.c[0], 0, regression.c[1]])(x)
 
 def fn_to_solve(x, regression):
-    return [linear_to_quadratic(regression, z) - power_fn(z) for z in x]
+    if isinstance(x, np.int64):
+
+        return regression.c[0]*(x**2) + regression.c[1] - ((12.5/15)*max_engine_power/x)
+    else:
+
+        return [regression.c[0]*(z**2) + regression.c[1] - ((12.5/15)*max_engine_power/z) for z in x]
 
 
 # enable some matplotlib patches for plotting timedelta values and load
@@ -139,7 +144,7 @@ for race in races:
             drs_lap = lap.copy()
 
             for index, row in drs_lap.iterrows():
-                if row["DRS"] == 12 or row["DRS"] == 14 or row["DRS"] == 10:
+                if row["DRS"] == 12:
                     if (
                         row["Acceleration"] > 0
                         and row["RPM"] >= 10500
@@ -171,6 +176,9 @@ for race in races:
                     or row["Throttle"] < 97
                     or row["Brake"] == True
                     or row["nGear"] != 8
+                    or row["DRS"] == 12
+                    or row["DRS"] == 14
+                    or row["DRS"] == 10
                 ):
                     lap.drop(index, inplace=True)
                 else:
@@ -512,11 +520,13 @@ with open("all_data.csv", "w", newline="") as csvfile:
         "v",
         "v max",
         "v min",
+        "v ±",
         "v drs",
         "v drs max",
         "v drs min",
+        "v drs ±",
         "delta v",
-        "delta v ±"
+        "delta v ±",
     ]
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
@@ -588,19 +598,25 @@ with open("all_data.csv", "w", newline="") as csvfile:
                 "c_rr (drs) ±": abs((
                     all_data[team]["drs_c_rr_max"] - all_data[team]["drs_c_rr_min"]
                 ))/2,
-                "v": fsolve(fn_to_solve, 100, args=all_data[team]["regression"]),
-                "v max": fsolve(fn_to_solve, 100, args=all_data[team]["max_regression"]),
-                "v min": fsolve(fn_to_solve, 100, args=all_data[team]["min_regression"]),
-                "v drs": fsolve(fn_to_solve, 100, args=all_data[team]["drs_regression"]),
-                "v drs max": fsolve(fn_to_solve, 100, args=all_data[team]["drs_max_regression"]),
-                "v drs min": fsolve(fn_to_solve, 100, args=all_data[team]["drs_min_regression"]),
-                "delta v": fsolve(fn_to_solve, 100, args=all_data[team]["drs_regression"]) - fsolve(fn_to_solve, 100, args=all_data[team]["regression"]),
-                "delta v±": (abs(
-                    fsolve(fn_to_solve, 100, args=all_data[team]["max_regression"]) - fsolve(fn_to_solve, 100, args=all_data[team]["min_regression"])
+                "v": fsolve(fn_to_solve, 100, args=all_data[team]["regression"])[0],
+                "v max": fsolve(fn_to_solve, 100, args=all_data[team]["max_regression"])[0],
+                "v min": fsolve(fn_to_solve, 100, args=all_data[team]["min_regression"])[0],
+                "v drs": fsolve(fn_to_solve, 100, args=all_data[team]["drs_regression"])[0],
+                "v drs max": fsolve(fn_to_solve, 100, args=all_data[team]["drs_max_regression"])[0],
+                "v drs min": fsolve(fn_to_solve, 100, args=all_data[team]["drs_min_regression"])[0],
+                "delta v": fsolve(fn_to_solve, 100, args=all_data[team]["drs_regression"])[0] - fsolve(fn_to_solve, 100, args=all_data[team]["regression"])[0],
+                "delta v ±": (abs(
+                    fsolve(fn_to_solve, 100, args=all_data[team]["max_regression"])[0] - fsolve(fn_to_solve, 100, args=all_data[team]["min_regression"])[0]
                 )/2) + 
                 (abs(
-                    fsolve(fn_to_solve, 100, args=all_data[team]["drs_max_regression"]) - fsolve(fn_to_solve, 100, args=all_data[team]["drs_min_regression"])
-                )/2)
+                    fsolve(fn_to_solve, 100, args=all_data[team]["drs_max_regression"])[0] - fsolve(fn_to_solve, 100, args=all_data[team]["drs_min_regression"])[0]
+                )/2),
+                "v ±": abs(
+                    fsolve(fn_to_solve, 100, args=all_data[team]["max_regression"])[0] - fsolve(fn_to_solve, 100, args=all_data[team]["min_regression"])[0]
+                )/2,
+                "v drs ±": abs(
+                    fsolve(fn_to_solve, 100, args=all_data[team]["drs_max_regression"])[0] - fsolve(fn_to_solve, 100, args=all_data[team]["drs_min_regression"])[0]
+                )/2
             }
         )
 
