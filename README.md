@@ -1,5 +1,5 @@
 # F1 DRS Effectiveness
-This project was created for my grade 12 physics lab (that's why the code is poorly written haha). 
+This project was created for my grade 12 physics lab. 
 
 ## How it Works
  - Get data of fastest qualifying lap of each driver and group via car
